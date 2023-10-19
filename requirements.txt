@@ -1,10 +1,11 @@
 numpy==1.25.0
 openai==0.27.8
 jupyter==1.0.0
+pandas==2.1.1
 
 # Math
 latex2sympy2==1.9.1
 sympy==1.12
 
 # Better env vars
-environs
+environs==9.5.0

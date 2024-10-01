@@ -9,3 +9,6 @@ sympy==1.12
 
 # Better env vars
 environs==9.5.0
+
+click==8.1.7
+pyyaml==6.0.2

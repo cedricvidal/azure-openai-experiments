@@ -1,7 +1,7 @@
 import click
 
 @click.command()
-@click.option('--request', prompt='Image prompt', help='Describe the image to generate.')
+@click.option('--request', '-r', prompt='Image prompt', help='Describe the image to generate.')
 def generate(request):
 
     # Note: DALL-E 3 requires version 1.0.0 of the openai-python library or later
@@ -15,14 +15,16 @@ def generate(request):
 
     load_dotenv()
 
-    api_base = os.environ.get("AZURE_OPENAI_API_BASE", "https://api.openai.com/v1")
-    api_key = os.environ.get("AZURE_OPENAI_API_KEY")
-    api_version = os.environ.get("AZURE_OPENAI_API_VERSION", None)
+    completion_client = AzureOpenAI(
+        api_version=os.environ.get("COMPLETION_AZURE_OPENAI_API_VERSION", None),
+        azure_endpoint=os.environ.get("COMPLETION_AZURE_OPENAI_API_BASE", "https://api.openai.com/v1"),
+        api_key=os.environ.get("COMPLETION_AZURE_OPENAI_API_KEY"),
+    )
 
-    client = AzureOpenAI(
-        api_version=api_version,
-        azure_endpoint=api_base,
-        api_key=api_key,
+    image_client = AzureOpenAI(
+        api_version=os.environ.get("IMAGE_AZURE_OPENAI_API_VERSION", None),
+        azure_endpoint=os.environ.get("IMAGE_AZURE_OPENAI_API_BASE", "https://api.openai.com/v1"),
+        api_key=os.environ.get("IMAGE_AZURE_OPENAI_API_KEY"),
     )
 
     images_paths = []
@@ -33,7 +35,7 @@ def generate(request):
     from pathlib import Path
     def gen_filename(prompt):
         ts = datetime.now().strftime("%Y-%m-%d-%H:%M:%S")
-        return f"work/{ts} {prompt}"[:251]
+        return f"work/{ts}"[:251]
 
     def write_prompt(request, prompt, filename):
         with open(filename, "w") as f:
@@ -51,8 +53,8 @@ def generate(request):
     """
 
     print("Generating Dall-e 3 prompt ...")
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
+    response = completion_client.chat.completions.create(
+        model=os.environ.get("COMPLETION_AZURE_OPENAI_DEPLOYMENT", None),
         messages=[
             {"role": "system", "content": system},
             {"role": "user", "content": prompt},
@@ -63,8 +65,8 @@ def generate(request):
     print(f"Dall-e 3 prompt: {dalle_prompt}")
 
     print("Generating image ...")
-    result = client.images.generate(
-        model="dall-e-3", # the name of your DALL-E 3 deployment
+    result = image_client.images.generate(
+        model=os.environ.get("IMAGE_AZURE_OPENAI_DEPLOYMENT", None), # the name of your DALL-E 3 deployment
         prompt=dalle_prompt,
         size="1792x1024",
         n=1
